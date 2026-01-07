@@ -2,20 +2,19 @@
 
 #define STACK_H
 #define STACK_SIZE 1024 * 10
-typedef unsigned long size_t;
 
 class Stack {
 public:
-  Stack() = default;
+  Stack();
   ~Stack() = default;
   void push(long val);
   long pop();
+  bool is_empty();
+  bool is_full();
 
 private:
   long mem[STACK_SIZE];
-  size_t ind;
-  bool is_empty();
-  bool is_full();
+  unsigned long ind = 0;
 };
 
 #endif // !STACK_H
