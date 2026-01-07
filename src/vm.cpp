@@ -1,4 +1,5 @@
 #include "vm.hpp"
+#include "op_codes.hpp"
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -38,3 +39,212 @@ void VM::load(const std::string &filename) {
             << std::endl;
 }
 
+void VM::run() {
+  if (verbose) {
+    std::cout << "VM running in verbose mode..." << std::endl;
+  } else {
+    std::cout << "VM running..." << std::endl;
+  }
+
+  while (true) {
+    if (pc >= MEM_SIZE) {
+      throw std::runtime_error(
+          "VM Runtime Error: Program Counter out of bounds.");
+    }
+
+    unsigned char instruction_byte = static_cast<unsigned char>(ram.get(pc++));
+    Opcode opcode = byteToOpcode(instruction_byte);
+
+    if (verbose) {
+      std::cout << "PC: " << pc - 1 << ", Opcode: " << opcodeToString(opcode);
+    }
+
+    long val1, val2, addr, idx, amt;
+    switch (opcode) {
+    case NOP:
+      if (verbose)
+        std::cout << " (NOP)" << std::endl;
+      break;
+    case PUSH:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error(
+            "VM Runtime Error: PUSH operand out of bounds.");
+      val1 = ram.get(pc);
+      register_stack.push(val1);
+      pc++;
+      if (verbose)
+        std::cout << " " << val1 << " (PUSH " << val1 << ")" << std::endl;
+      break;
+    case POP:
+      register_stack.pop();
+      if (verbose)
+        std::cout << " (POP)" << std::endl;
+      break;
+    case DUP:
+      register_stack.dup();
+      if (verbose)
+        std::cout << " (DUP)" << std::endl;
+      break;
+    case ADD:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 + val2);
+      if (verbose)
+        std::cout << " (ADD " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case SUB:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 - val2);
+      if (verbose)
+        std::cout << " (SUB " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case MUL:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 * val2);
+      if (verbose)
+        std::cout << " (MUL " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case DIV:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      if (val2 == 0) {
+        throw std::runtime_error("VM Runtime Error: Division by zero.");
+      }
+      register_stack.push(val1 / val2);
+      if (verbose)
+        std::cout << " (DIV " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case CMP:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 < val2 ? 1 : 0);
+      if (verbose)
+        std::cout << " (CMP " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case AND:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 & val2);
+      if (verbose)
+        std::cout << " (AND " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case OR:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 | val2);
+      if (verbose)
+        std::cout << " (OR " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case XOR:
+      val2 = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 ^ val2);
+      if (verbose)
+        std::cout << " (XOR " << val1 << ", " << val2 << ")" << std::endl;
+      break;
+    case NOT:
+      val1 = register_stack.pop();
+      register_stack.push(~val1);
+      if (verbose)
+        std::cout << " (NOT " << val1 << ")" << std::endl;
+      break;
+    case SHL:
+      amt = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 << amt);
+      if (verbose)
+        std::cout << " (SHL " << val1 << ", " << amt << ")" << std::endl;
+      break;
+    case SHR:
+      amt = register_stack.pop();
+      val1 = register_stack.pop();
+      register_stack.push(val1 >> amt);
+      if (verbose)
+        std::cout << " (SHR " << val1 << ", " << amt << ")" << std::endl;
+      break;
+    case JMP:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error(
+            "VM Runtime Error: JMP address out of bounds.");
+      addr = ram.get(pc);
+      pc = addr;
+      if (verbose)
+        std::cout << " " << addr << " (JMP to " << addr << ")" << std::endl;
+      break;
+    case JZ:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error("VM Runtime Error: JZ address out of bounds.");
+      val1 = register_stack.pop();
+      addr = ram.get(pc);
+      pc++;
+      if (val1 == 0) {
+        pc = addr;
+      }
+      if (verbose)
+        std::cout << " " << addr << " (JZ to " << addr << " if " << val1
+                  << " == 0)" << std::endl;
+      break;
+    case JNZ:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error(
+            "VM Runtime Error: JNZ address out of bounds.");
+      val1 = register_stack.pop();
+      addr = ram.get(pc);
+      pc++;
+      if (val1 != 0) {
+        pc = addr;
+      }
+      if (verbose)
+        std::cout << " " << addr << " (JNZ to " << addr << " if " << val1
+                  << " != 0)" << std::endl;
+      break;
+    case STORE:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error(
+            "VM Runtime Error: STORE index out of bounds.");
+      val1 = register_stack.pop();
+      idx = ram.get(pc);
+      pc++;
+      ram.store(idx, val1);
+      if (verbose)
+        std::cout << " " << idx << " (STORE " << val1 << " at " << idx << ")"
+                  << std::endl;
+      break;
+    case LOAD:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error("VM Runtime Error: LOAD index out of bounds.");
+      idx = ram.get(pc);
+      pc++;
+      register_stack.push(ram.get(idx));
+      if (verbose)
+        std::cout << " " << idx << " (LOAD from " << idx << ")" << std::endl;
+      break;
+    case CALL:
+      if (pc >= MEM_SIZE)
+        throw std::runtime_error(
+            "VM Runtime Error: CALL address out of bounds.");
+      addr = ram.get(pc);
+      pc++;
+      call_stack.push(pc);
+      pc = addr;
+      if (verbose)
+        std::cout << " " << addr << " (CALL " << addr << ")" << std::endl;
+      break;
+    case RET:
+      pc = call_stack.pop();
+      if (verbose)
+        std::cout << " (RET to " << pc << ")" << std::endl;
+      break;
+    case HALT:
+      if (verbose)
+        std::cout << " (HALT)" << std::endl;
+      return;
+    default:
+      throw std::runtime_error(
+          "VM Runtime Error: Unimplemented or unknown opcode: " +
+          opcodeToString(opcode));
+    }
+  }
+}
