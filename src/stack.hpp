@@ -11,6 +11,7 @@ public:
   ~Stack() = default;
   void push(long val);
   long pop();
+  long peek();
   void dup();
   bool is_empty();
   bool is_full();

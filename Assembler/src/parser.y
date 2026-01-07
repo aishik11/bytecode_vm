@@ -66,7 +66,7 @@ void emit_long(long value) {
 %token <sval> T_ID 
 %token <ival> T_INTEGER 
 
-%token T_PUSH T_POP T_DUP T_HALT 
+%token T_PUSH T_POP T_DUP T_PEEKPRINT T_HALT 
 %token T_ADD T_SUB T_MUL T_DIV T_CMP 
 %token T_AND T_OR T_XOR T_NOT T_SHL T_SHR 
 %token T_JMP T_JZ T_JNZ 
@@ -95,6 +95,7 @@ instruction:
     T_PUSH T_INTEGER { emit_long(0x01); emit_long($2); } 
     | T_POP { emit_long(0x02); } 
     | T_DUP { emit_long(0x03); } 
+    | T_PEEKPRINT { emit_long(0x04); } 
     | T_HALT { emit_long(0xFF); } 
     | T_ADD { emit_long(0x10); } 
     | T_SUB { emit_long(0x11); } 

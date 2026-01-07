@@ -21,6 +21,7 @@ static int handle_label(char* label) {
 "PUSH"      { return T_PUSH; }
 "POP"       { return T_POP; }
 "DUP"       { return T_DUP; }
+"PEEKPRINT" { return T_PEEKPRINT; }
 "HALT"      { return T_HALT; }
 "ADD"       { return T_ADD; }
 "SUB"       { return T_SUB; }

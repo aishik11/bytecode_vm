@@ -11,6 +11,8 @@ Opcode longToOpcode(long val) {
     return POP;
   case 0x03:
     return DUP;
+  case 0x04:
+    return PEEKPRINT;
   case 0x10:
     return ADD;
   case 0x11:
@@ -64,6 +66,8 @@ std::string opcodeToString(Opcode opcode) {
     return "POP";
   case DUP:
     return "DUP";
+  case PEEKPRINT:
+    return "PEEKPRINT";
   case ADD:
     return "ADD";
   case SUB:

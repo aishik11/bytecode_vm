@@ -15,6 +15,12 @@ long Stack::pop() {
   return mem[--ind];
 }
 
+long Stack::peek() {
+  if (is_empty())
+    throw std::runtime_error("Stack Underflow");
+  return mem[ind - 1];
+}
+
 bool Stack::is_full() { return ind == STACK_SIZE; }
 
 bool Stack::is_empty() { return ind == 0; }

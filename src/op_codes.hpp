@@ -10,6 +10,7 @@ typedef enum Opcode {
   PUSH,
   POP,
   DUP,
+  PEEKPRINT = 0x04,
   // Arithmetic
   ADD = 0x10,
   SUB,

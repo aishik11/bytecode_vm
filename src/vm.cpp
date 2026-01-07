@@ -90,6 +90,12 @@ void VM::run() {
       if (verbose)
         std::cout << " (DUP)" << std::endl;
       break;
+    case PEEKPRINT:
+      val1 = register_stack.peek();
+      std::cout << val1 << std::endl;
+      if (verbose)
+        std::cout << " (PEEKPRINT)" << std::endl;
+      break;
     case ADD:
       val2 = register_stack.pop();
       val1 = register_stack.pop();
