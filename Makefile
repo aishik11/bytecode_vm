@@ -9,12 +9,16 @@ TARGET = bvm
 
 all: $(BUILDDIR)/$(TARGET)
 
-$(BUILDDIR)/$(TARGET): $(SRCDIR)/main.cpp
+$(BUILDDIR)/$(TARGET): $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp
 	mkdir -p $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp -o $@
 
-test:
-	# Add commands to compile and run your tests here
+test: test_stack
+
+test_stack: $(TESTDIR)/test_stack.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp
+	mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_stack.cpp $(SRCDIR)/stack.cpp -o $(BUILDDIR)/test_stack
+	$(BUILDDIR)/test_stack
 
 clean:
 	rm -rf $(BUILDDIR)
