@@ -9,6 +9,7 @@ public:
   ~Stack() = default;
   void push(long val);
   long pop();
+  void dup();
   bool is_empty();
   bool is_full();
 

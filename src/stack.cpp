@@ -18,3 +18,11 @@ long Stack::pop() {
 bool Stack::is_full() { return ind == STACK_SIZE; }
 
 bool Stack::is_empty() { return ind == 0; }
+
+void Stack::dup() {
+  if (is_empty())
+    throw std::runtime_error("Stack Underflow: Cannot duplicate from an empty stack.");
+  long val = pop();
+  push(val);
+  push(val);
+}
