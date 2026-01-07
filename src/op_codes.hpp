@@ -1,6 +1,8 @@
 #ifndef OPCODE_H
 #define OPCODE_H
 
+#include <string>
+
 typedef enum Opcode {
   // Blank
   NOP = 0x00,
@@ -33,5 +35,8 @@ typedef enum Opcode {
   // Halt
   HALT = 0xFF,
 } Opcode;
+
+Opcode byteToOpcode(unsigned char byte);
+std::string opcodeToString(Opcode opcode);
 
 #endif // !OPCODE_H
