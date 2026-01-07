@@ -2,18 +2,25 @@
 #define VM_H
 
 #include "memory.hpp"
-#include "op_codes.hpp"
 #include "stack.hpp"
+#include <string>
 
 class VM {
 public:
   VM();
   ~VM();
 
-private:
   Stack call_stack;
   Stack register_stack;
   Memory ram;
+  unsigned long pc;
+  bool verbose;
+
+  void load(const std::string &filename);
+  void run();
+  void setVerbose(bool v);
+
+private:
 };
 
 #endif // !VM_H
