@@ -20,6 +20,7 @@ The assembler is a crucial part of the toolchain, converting human-readable asse
 
 ### Two-Pass Design
 To handle forward references (i.e., using a label before it is defined), the assembler is designed as a **two-pass assembler**:
+
 1.  **First Pass:** The parser runs through the entire source file. Its only goal is to find all label definitions (e.g., `my_label:`). It stores each label and its address (the value of the program counter `pc` at that point) in a symbol table. Instructions that use labels as operands (like `JMP`, `JZ`, `JNZ`, `CALL`) are given a placeholder operand of `0`.
 2.  **Second Pass:** The file pointer and line counter are reset, and the parser runs again. This time, when it encounters an instruction that uses a label, it looks up the label in the symbol table to get its address. It then emits the correct `long` opcode and `long` address into the bytecode buffer.
 
@@ -37,6 +38,7 @@ The VM supports basic function calls and returns using the `CALL` and `RET` inst
 
 ### Calling Convention
 We opted for a simple, manual "callee-cleans" calling convention.
+
 -   **Caller:** Pushes arguments onto the register stack before making a `CALL`.
 -   **Callee:** Is responsible for its own stack management. It must pop its arguments and any local variables it used, and then push its single return value (if any) before executing `RET`.
 
