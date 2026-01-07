@@ -12,7 +12,8 @@ public:
 
   Stack call_stack;
   Stack register_stack;
-  Memory ram;
+  Memory program_memory;
+  Memory data_memory;
   unsigned long pc;
   bool verbose;
 
