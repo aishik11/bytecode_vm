@@ -1,5 +1,7 @@
 #ifndef STACK_H
 
+#include <vector>
+
 #define STACK_H
 #define STACK_SIZE 1024 * 10
 
@@ -12,6 +14,7 @@ public:
   void dup();
   bool is_empty();
   bool is_full();
+  std::vector<long> getElements() const;
 
 private:
   long mem[STACK_SIZE];

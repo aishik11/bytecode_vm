@@ -30,6 +30,9 @@ int main(int argc, char *argv[]) {
   try {
     vm.load(filename);
     vm.run();
+    if (verbose) {
+      vm.printStack();
+    }
   } catch (const std::runtime_error &e) {
     std::cerr << "VM Error: " << e.what() << std::endl;
     return 1;

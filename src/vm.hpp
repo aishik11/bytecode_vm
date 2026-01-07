@@ -20,6 +20,7 @@ public:
   void load(const std::string &filename);
   void run();
   void setVerbose(bool v);
+  void printStack();
 
 private:
 };

@@ -249,3 +249,14 @@ void VM::run() {
     }
   }
 }
+
+void VM::printStack() {
+  std::cout << "Stack (top to bottom):" << std::endl;
+  std::vector<long> stack_elements = register_stack.getElements();
+  for (int i = stack_elements.size() - 1; i >= 0; --i) {
+    std::cout << "  " << stack_elements[i] << std::endl;
+  }
+  if (stack_elements.empty()) {
+    std::cout << "  (empty)" << std::endl;
+  }
+}

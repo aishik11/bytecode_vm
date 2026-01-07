@@ -47,4 +47,9 @@ assembler:
 	$(MAKE) -C Assembler
 	cp Assembler/bin/assembler $(BUILDDIR)/assembler
 
-.PHONY: all test clean assembler clean_assembler
+.PHONY: all test clean assembler clean_assembler pipeline_test
+
+pipeline_test: all assembler
+	cd pipeline_tests && ./run_pipeline_tests.sh
+
+

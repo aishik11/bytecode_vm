@@ -26,3 +26,11 @@ void Stack::dup() {
   push(val);
   push(val);
 }
+
+std::vector<long> Stack::getElements() const {
+    std::vector<long> elements;
+    for (unsigned long i = 0; i < ind; ++i) {
+        elements.push_back(mem[i]);
+    }
+    return elements;
+}
