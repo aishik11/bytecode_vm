@@ -62,18 +62,51 @@ The project employs a multi-layered testing strategy to ensure correctness and r
 
 ## 6. Benchmarks / Performance Analysis
 
-To evaluate the performance of the VM, a suite of benchmarks was created and run. The benchmarks were executed on the same machine and the `real` time was recorded.
+To evaluate the performance of the VM, a comprehensive suite of benchmarks was created, testing basic operations at scale and recursive algorithms.
 
-### Results
+### 6.1. Basic Operations Performance
 
-| Benchmark               | Time (real) | Description                                         |
-| ----------------------- | ----------- | --------------------------------------------------- |
-| `simple_loop`           | 0.171s      | A loop that executes 1,000,000 times with a few simple instructions per iteration. |
-| `iterative_factorial`   | 0.002s      | Calculates the factorial of 20 using an iterative loop. |
-| `recursive_fibonacci`   | 0.001s      | Calculates the 20th Fibonacci number using recursion. |
+We measured the execution time of common operations (`ADD`, `MUL`, `PUSH/POP`, `LOAD/STORE`) in loops ranging from 10 to 1,000,000 iterations. The results represent the **median of 5 runs**.
+
+| Operations (n) | ADD (ms) | MUL (ms) | PUSH/POP (ms) | LOAD/STORE (ms) |
+|----------------|----------|----------|---------------|-----------------|
+| 10             | 3.02     | 3.28     | 2.85          | 3.34            |
+| 100            | 2.91     | 3.41     | 2.97          | 2.71            |
+| 1,000          | 2.70     | 2.90     | 2.66          | 2.83            |
+| 10,000         | 3.95     | 4.21     | 3.36          | 4.36            |
+| 100,000        | 14.38    | 16.73    | 12.26         | 15.86           |
+| 1,000,000      | 107.31   | 105.78   | 81.80         | 117.55          |
+
+**Note on Scaling:** The log-log scale is used below to visualize performance over five orders of magnitude. The linear scaling $O(n)$ is represented by the near-constant slope of 1 for $n \ge 10,000$.
+
+![Operations Comparison](benchmarks/plotting/ops_comparison.png)
+
+### 6.2. Recursive Algorithms Performance
+
+We also tested the VM's performance with recursive implementations of Fibonacci and Factorial (median of 5 runs).
+
+| n (Fib) | Fibonacci (ms) | n (Fact) | Factorial (ms) |
+|---------|----------------|----------|----------------|
+| 10      | 2.70           | 10       | 2.86           |
+| 20      | 5.76           | 20       | 2.85           |
+| 24      | 23.77          | 24       | 2.95           |
+| 28      | 147.70         | 28       | 3.36           |
+| 32      | 988.61         | 32       | 2.94           |
+| -       | -              | 40       | 2.77           |
+
+#### Fibonacci Performance
+The semi-log plot clearly shows the exponential growth characteristic of the recursive Fibonacci algorithm.
+
+![Fibonacci Performance](benchmarks/plotting/fib_performance.png)
+
+#### Factorial Performance
+The linear scaling of the recursive factorial is evident, remaining nearly constant for small values of $n$ due to minimal overhead compared to Fibonacci.
+
+![Factorial Performance](benchmarks/plotting/fact_performance.png)
 
 ### Analysis
--   **`simple_loop`:** This benchmark provides a baseline for the overhead of the main VM loop and simple instructions. The execution time is significant due to the high number of iterations (1,000,000), which highlights the cost of the instruction dispatch mechanism.
--   **`iterative_factorial`:** This benchmark is very fast, as it involves a very small number of loop iterations (20). It demonstrates that for simple, short-running programs, the VM's performance is excellent.
--   **`recursive_fibonacci`:** The recursive Fibonacci benchmark is also very fast. For `fib(20)`, the number of function calls is significant, but not large enough to incur a major performance penalty. This indicates that the `CALL` and `RET` instructions, while simple, are implemented efficiently. The performance of this benchmark would degrade significantly with larger input numbers, as expected from a recursive Fibonacci implementation.
+
+- **Operation Scaling:** The VM shows linear scaling with the number of operations, as expected. Dispatch overhead is consistent across different instruction types.
+- **Recursion Overhead:** The recursive Fibonacci benchmark highlights the exponential growth in function calls. The jump from `n=20` to `n=25` shows a significant increase in execution time, demonstrating the overhead of `CALL` and `RET` operations at scale.
+- **Factorial:** Recursive factorial, being `O(n)`, remains extremely fast even for `n=25`, as it only involves 25 function calls.
 

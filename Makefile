@@ -53,6 +53,7 @@ pipeline_test: all assembler
 	cd pipeline_tests && ./run_pipeline_tests.sh
 
 benchmark: all assembler
-	cd benchmarks && ./run_benchmarks.sh
+	cd benchmarks && uv run run_benchmarks.py
+	cd benchmarks/plotting && uv run visualize.py
 
 
