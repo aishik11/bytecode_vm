@@ -1,4 +1,3 @@
-
 %{ 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -13,27 +12,22 @@ extern FILE *yyin;
 FILE *out_file; 
 
 // Bytecode buffer 
-unsigned char bytecode[4096]; 
-int pc = 0; // Program counter 
+long bytecode[4096]; 
+int pc = 0; // Program counter is now an index into the long array
 
 // Symbol table for labels 
 #define MAX_LABELS 100 
 struct label { 
     char *name; 
-    int address; 
+    long address; 
 };
 struct label symbol_table[MAX_LABELS]; 
 int label_count = 0; 
 
 int pass = 1; // Current pass 
 
-// Function to set the output file 
-void set_output_file(FILE *file) { 
-    out_file = file; 
-}
-
 // Function to add a label to the symbol table 
-void add_label(char *name, int address) { 
+void add_label(char *name, long address) { 
     if (pass == 1) { 
         if (label_count < MAX_LABELS) { 
             symbol_table[label_count].name = strdup(name); 
@@ -46,7 +40,7 @@ void add_label(char *name, int address) {
 }
 
 // Function to lookup a label 
-int lookup_label(char *name) { 
+long lookup_label(char *name) { 
     for (int i = 0; i < label_count; i++) { 
         if (strcmp(symbol_table[i].name, name) == 0) { 
             return symbol_table[i].address; 
@@ -55,25 +49,17 @@ int lookup_label(char *name) {
     return -1;
 }
 
-// Function to emit a byte 
-void emit_byte(unsigned char byte) { 
-    if (pass == 2) { 
-        bytecode[pc] = byte; 
+// Function to emit a long
+void emit_long(long value) {
+    if (pass == 2) {
+        bytecode[pc] = value;
     }
     pc++;
-}
-
-// Function to emit a 32-bit integer 
-void emit_int(int value) { 
-    if (pass == 2) { 
-        *(int*)(bytecode + pc) = value; 
-    }
-    pc += 4;
 }
 %} 
 
 %union { 
-    int ival; 
+    long ival; 
     char *sval;
 }
 
@@ -106,72 +92,72 @@ label_def:
     ;
 
 instruction:
-    T_PUSH T_INTEGER { emit_byte(0x01); emit_int($2); } 
-    | T_POP { emit_byte(0x02); } 
-    | T_DUP { emit_byte(0x03); } 
-    | T_HALT { emit_byte(0xFF); } 
-    | T_ADD { emit_byte(0x10); } 
-    | T_SUB { emit_byte(0x11); } 
-    | T_MUL { emit_byte(0x12); } 
-    | T_DIV { emit_byte(0x13); } 
-    | T_CMP { emit_byte(0x14); } 
-    | T_AND { emit_byte(0x15); } 
-    | T_OR { emit_byte(0x16); } 
-    | T_XOR { emit_byte(0x17); } 
-    | T_NOT { emit_byte(0x18); } 
-    | T_SHL { emit_byte(0x19); } 
-    | T_SHR { emit_byte(0x1A); } 
+    T_PUSH T_INTEGER { emit_long(0x01); emit_long($2); } 
+    | T_POP { emit_long(0x02); } 
+    | T_DUP { emit_long(0x03); } 
+    | T_HALT { emit_long(0xFF); } 
+    | T_ADD { emit_long(0x10); } 
+    | T_SUB { emit_long(0x11); } 
+    | T_MUL { emit_long(0x12); } 
+    | T_DIV { emit_long(0x13); } 
+    | T_CMP { emit_long(0x14); } 
+    | T_AND { emit_long(0x15); } 
+    | T_OR { emit_long(0x16); } 
+    | T_XOR { emit_long(0x17); } 
+    | T_NOT { emit_long(0x18); } 
+    | T_SHL { emit_long(0x19); } 
+    | T_SHR { emit_long(0x1A); } 
     | T_JMP T_ID { 
-        emit_byte(0x20); 
+        emit_long(0x20); 
         if (pass == 2) { 
-            int addr = lookup_label($2); 
+            long addr = lookup_label($2); 
             if (addr == -1) { 
                 yyerror("Label not found"); 
             }
-            emit_int(addr); 
+            emit_long(addr); 
         } else { 
-            pc += 4; 
+            emit_long(0); // Placeholder for address
         }
     } 
     | T_JZ T_ID { 
-        emit_byte(0x21); 
+        emit_long(0x21); 
         if (pass == 2) { 
-            int addr = lookup_label($2); 
+            long addr = lookup_label($2); 
             if (addr == -1) { 
                 yyerror("Label not found"); 
             }
-            emit_int(addr); 
+            emit_long(addr); 
         } else { 
-            pc += 4; 
+            emit_long(0); // Placeholder for address
         }
     } 
     | T_JNZ T_ID { 
-        emit_byte(0x22); 
+        emit_long(0x22); 
         if (pass == 2) { 
-            int addr = lookup_label($2); 
+            long addr = lookup_label($2); 
             if (addr == -1) { 
                 yyerror("Label not found"); 
             }
-            emit_int(addr); 
+            emit_long(addr); 
         } else { 
-            pc += 4; 
+            emit_long(0); // Placeholder for address
         }
     } 
-    | T_STORE T_INTEGER { emit_byte(0x30); emit_int($2); } 
-    | T_LOAD T_INTEGER { emit_byte(0x31); emit_int($2); } 
+    | T_STORE T_INTEGER { emit_long(0x30); emit_long($2); } 
+    | T_LOAD T_INTEGER { emit_long(0x31); emit_long($2); } 
     | T_CALL T_ID { 
-        emit_byte(0x40); 
+        emit_long(0x40); 
         if (pass == 2) { 
-            int addr = lookup_label($2); 
+            long addr = lookup_label($2); 
             if (addr == -1) { 
                 yyerror("Label not found"); 
             }
-            emit_int(addr); 
+            emit_long(addr); 
         } else { 
-            pc += 4; 
+            emit_long(0); // Placeholder for address
         }
     } 
-    | T_RET { emit_byte(0x41); } 
+    | T_RET { emit_long(0x41); } 
     ;
 
 %%
@@ -184,24 +170,6 @@ void yyerror(const char *s) {
 int yywrap() { 
     return 1;
 }
-
-// In main.c, we will call this after yyparse 
-void second_pass() { 
-    pc = 0; 
-    pass = 2; 
-    // We need to rewind the input file 
-    rewind(yyin); 
-    // And reset the line number 
-    yylineno = 1; 
-    // And call the parser again 
-    yyparse(); 
-    // Write the bytecode to the file 
-    fwrite(bytecode, 1, pc, out_file); 
-}
-
-// In the original main.c, you should call yyparse() then second_pass() 
-// We will modify main.c to do this. 
-#include <stdio.h> 
 
 // Redefine main to be in the parser file 
 int main(int argc, char **argv) { 
@@ -236,12 +204,12 @@ int main(int argc, char **argv) {
     yyparse(); 
 
     // Write the bytecode 
-    fwrite(bytecode, 1, pc, out_file); 
+    fwrite(bytecode, sizeof(long), pc, out_file); 
 
     fclose(yyin); 
     fclose(out_file); 
 
-    printf("Assembly successful. Wrote %d bytes.\n", pc); 
+    printf("Assembly successful. Wrote %ld bytes.\n", pc * sizeof(long)); 
 
     return 0;
 }
