@@ -11,3 +11,5 @@ Assembler/src/parser.tab.h
 Assembler/src/parser.tab.c
 Assembler/src/lexer.yy.o
 Assembler/src/lexer.yy.c
+test_push_add_halt.bin
+test_store_load_halt.bin

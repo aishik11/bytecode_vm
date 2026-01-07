@@ -30,7 +30,7 @@ test_opcodes: $(TESTDIR)/test_opcodes.cpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_co
 	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_opcodes.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_opcodes
 	$(BUILDDIR)/test_opcodes
 
-test_vm: $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/memory.cpp $(SRCDIR)/memory.hpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_codes.hpp
+test_vm: $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/memory.cpp $(SRCDIR)/memory.hpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_codes.hpp assembler
 	mkdir -p $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_vm
 	$(BUILDDIR)/test_vm
@@ -47,9 +47,12 @@ assembler:
 	$(MAKE) -C Assembler
 	cp Assembler/bin/assembler $(BUILDDIR)/assembler
 
-.PHONY: all test clean assembler clean_assembler pipeline_test
+.PHONY: all test clean assembler clean_assembler pipeline_test benchmark
 
 pipeline_test: all assembler
 	cd pipeline_tests && ./run_pipeline_tests.sh
+
+benchmark: all assembler
+	cd benchmarks && ./run_benchmarks.sh
 
 

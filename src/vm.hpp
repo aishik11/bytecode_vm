@@ -17,7 +17,7 @@ public:
   unsigned long pc;
   bool verbose;
 
-  void load(const std::string &filename);
+  void load(const std::string& filename);
   void run();
   void setVerbose(bool v);
   void printStack();

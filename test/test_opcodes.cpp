@@ -1,28 +1,26 @@
 #include "../src/op_codes.hpp"
 #include <cassert>
 #include <iostream>
-#include <vector>
-#include <map>
 
-void test_byteToOpcode() {
+void test_longToOpcode() {
   // Test valid opcodes
-  assert(byteToOpcode(0x00) == NOP && "byteToOpcode NOP failed");
-  assert(byteToOpcode(0x01) == PUSH && "byteToOpcode PUSH failed");
-  assert(byteToOpcode(0x10) == ADD && "byteToOpcode ADD failed");
-  assert(byteToOpcode(0x20) == JMP && "byteToOpcode JMP failed");
-  assert(byteToOpcode(0x30) == STORE && "byteToOpcode STORE failed");
-  assert(byteToOpcode(0xFF) == HALT && "byteToOpcode HALT failed");
+  assert(longToOpcode(0x00) == NOP && "longToOpcode NOP failed");
+  assert(longToOpcode(0x01) == PUSH && "longToOpcode PUSH failed");
+  assert(longToOpcode(0x10) == ADD && "longToOpcode ADD failed");
+  assert(longToOpcode(0x20) == JMP && "longToOpcode JMP failed");
+  assert(longToOpcode(0x30) == STORE && "longToOpcode STORE failed");
+  assert(longToOpcode(0xFF) == HALT && "longToOpcode HALT failed");
 
   // Test an unknown opcode (should throw an exception)
   bool caught_exception = false;
   try {
-    byteToOpcode(0x05); // An undefined opcode
-  } catch (const std::runtime_error& e) {
+    longToOpcode(0x05); // An undefined opcode
+  } catch (const std::runtime_error &e) {
     caught_exception = true;
   }
-  assert(caught_exception && "byteToOpcode did not throw for unknown opcode");
-  
-  std::cout << "test_byteToOpcode passed" << std::endl;
+  assert(caught_exception && "longToOpcode did not throw for unknown opcode");
+
+  std::cout << "test_longToOpcode passed" << std::endl;
 }
 
 void test_opcodeToString() {
@@ -38,7 +36,7 @@ void test_opcodeToString() {
 }
 
 int main() {
-  test_byteToOpcode();
+  test_longToOpcode();
   test_opcodeToString();
   return 0;
 }

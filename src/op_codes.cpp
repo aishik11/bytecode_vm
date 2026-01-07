@@ -1,8 +1,8 @@
 #include "op_codes.hpp"
 #include <stdexcept>
 
-Opcode byteToOpcode(unsigned char byte) {
-  switch (byte) {
+Opcode longToOpcode(long val) {
+  switch (val) {
   case 0x00:
     return NOP;
   case 0x01:
@@ -50,7 +50,7 @@ Opcode byteToOpcode(unsigned char byte) {
   case 0xFF:
     return HALT;
   default:
-    throw std::runtime_error("Unknown opcode byte: " + std::to_string(byte));
+    throw std::runtime_error("Unknown opcode: " + std::to_string(val));
   }
 }
 

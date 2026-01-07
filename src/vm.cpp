@@ -12,31 +12,37 @@ VM::~VM() {}
 void VM::setVerbose(bool v) { verbose = v; }
 
 void VM::load(const std::string &filename) {
-  std::ifstream file(filename, std::ios::binary);
-  if (!file.is_open())
+  FILE* file = fopen(filename.c_str(), "rb");
+  if (!file) {
     throw std::runtime_error("VM Load Error: Could not open file " + filename);
-
-  std::vector<unsigned char> bytecode((std::istreambuf_iterator<char>(file)),
-                                      std::istreambuf_iterator<char>());
-  file.close();
-
-  if (bytecode.empty()) {
-    throw std::runtime_error(
-        "VM Load Error: File is empty or could not be read.");
   }
 
-  if (bytecode.size() > MEM_SIZE)
-    throw std::runtime_error(
-        "VM Load Error: Bytecode size exceeds memory capacity.");
+  fseek(file, 0, SEEK_END);
+  long file_size = ftell(file);
+  fseek(file, 0, SEEK_SET);
 
-  long val_array[bytecode.size()];
-  for (size_t i = 0; i < bytecode.size(); ++i) {
-    val_array[i] = static_cast<long>(bytecode[i]);
+  if (file_size == 0) {
+    fclose(file);
+    throw std::runtime_error("VM Load Error: File is empty.");
   }
-  program_memory.load(val_array, bytecode.size());
+  if (file_size % sizeof(long) != 0) {
+    fclose(file);
+    throw std::runtime_error("VM Load Error: File size is not a multiple of sizeof(long).");
+  }
+
+  size_t num_longs = file_size / sizeof(long);
+  if (num_longs > MEM_SIZE) {
+    fclose(file);
+    throw std::runtime_error("VM Load Error: Bytecode size exceeds memory capacity.");
+  }
+
+  long buffer[num_longs];
+  fread(buffer, sizeof(long), num_longs, file);
+  fclose(file);
+
+  program_memory.load(buffer, num_longs);
   pc = 0;
-  std::cout << "Loaded " << bytecode.size() << " bytes from " << filename
-            << std::endl;
+  std::cout << "Loaded " << file_size << " bytes from " << filename << std::endl;
 }
 
 void VM::run() {
@@ -52,9 +58,8 @@ void VM::run() {
           "VM Runtime Error: Program Counter out of bounds.");
     }
 
-    unsigned char instruction_byte = static_cast<unsigned char>(
-        program_memory.get(pc++)); // Fetch from program_memory
-    Opcode opcode = byteToOpcode(instruction_byte);
+    long instruction = program_memory.get(pc++);
+    Opcode opcode = longToOpcode(instruction);
 
     if (verbose) {
       std::cout << "PC: " << pc - 1 << ", Opcode: " << opcodeToString(opcode);
@@ -70,9 +75,8 @@ void VM::run() {
       if (pc >= MEM_SIZE)
         throw std::runtime_error(
             "VM Runtime Error: PUSH operand out of bounds.");
-      val1 = program_memory.get(pc);
+      val1 = program_memory.get(pc++);
       register_stack.push(val1);
-      pc++;
       if (verbose)
         std::cout << " " << val1 << " (PUSH " << val1 << ")" << std::endl;
       break;
@@ -169,7 +173,7 @@ void VM::run() {
       if (pc >= MEM_SIZE)
         throw std::runtime_error(
             "VM Runtime Error: JMP address out of bounds.");
-      addr = program_memory.get(pc);
+      addr = program_memory.get(pc++);
       pc = addr;
       if (verbose)
         std::cout << " " << addr << " (JMP to " << addr << ")" << std::endl;
@@ -178,8 +182,7 @@ void VM::run() {
       if (pc >= MEM_SIZE)
         throw std::runtime_error("VM Runtime Error: JZ address out of bounds.");
       val1 = register_stack.pop();
-      addr = program_memory.get(pc);
-      pc++;
+      addr = program_memory.get(pc++);
       if (val1 == 0) {
         pc = addr;
       }
@@ -192,8 +195,7 @@ void VM::run() {
         throw std::runtime_error(
             "VM Runtime Error: JNZ address out of bounds.");
       val1 = register_stack.pop();
-      addr = program_memory.get(pc);
-      pc++;
+      addr = program_memory.get(pc++);
       if (val1 != 0) {
         pc = addr;
       }
@@ -206,8 +208,7 @@ void VM::run() {
         throw std::runtime_error(
             "VM Runtime Error: STORE index out of bounds.");
       val1 = register_stack.pop();
-      idx = program_memory.get(pc);
-      pc++;
+      idx = program_memory.get(pc++);
       data_memory.store(idx, val1);
       if (verbose)
         std::cout << " " << idx << " (STORE " << val1 << " at " << idx << ")"
@@ -216,8 +217,7 @@ void VM::run() {
     case LOAD:
       if (pc >= MEM_SIZE)
         throw std::runtime_error("VM Runtime Error: LOAD index out of bounds.");
-      idx = program_memory.get(pc);
-      pc++;
+      idx = program_memory.get(pc++);
       register_stack.push(data_memory.get(idx));
       if (verbose)
         std::cout << " " << idx << " (LOAD from " << idx << ")" << std::endl;
@@ -226,8 +226,7 @@ void VM::run() {
       if (pc >= MEM_SIZE)
         throw std::runtime_error(
             "VM Runtime Error: CALL address out of bounds.");
-      addr = program_memory.get(pc);
-      pc++;
+      addr = program_memory.get(pc++);
       call_stack.push(pc);
       pc = addr;
       if (verbose)

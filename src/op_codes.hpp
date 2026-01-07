@@ -37,7 +37,7 @@ typedef enum Opcode {
   HALT = 0xFF,
 } Opcode;
 
-Opcode byteToOpcode(unsigned char byte);
+Opcode longToOpcode(long val);
 std::string opcodeToString(Opcode opcode);
 
 #endif // !OPCODE_H
