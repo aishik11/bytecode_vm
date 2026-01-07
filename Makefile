@@ -9,11 +9,11 @@ TARGET = bvm
 
 all: $(BUILDDIR)/$(TARGET)
 
-$(BUILDDIR)/$(TARGET): $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp
+$(BUILDDIR)/$(TARGET): $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp $(SRCDIR)/memory.cpp $(SRCDIR)/memory.hpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_codes.hpp
 	mkdir -p $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/op_codes.cpp -o $@
 
-test: test_stack test_memory
+test: test_stack test_memory test_opcodes
 
 test_stack: $(TESTDIR)/test_stack.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp
 	mkdir -p $(BUILDDIR)
@@ -24,6 +24,11 @@ test_memory: $(TESTDIR)/test_memory.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/memory.hp
 	mkdir -p $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_memory.cpp $(SRCDIR)/memory.cpp -o $(BUILDDIR)/test_memory
 	$(BUILDDIR)/test_memory
+
+test_opcodes: $(TESTDIR)/test_opcodes.cpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_codes.hpp
+	mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_opcodes.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_opcodes
+	$(BUILDDIR)/test_opcodes
 
 clean:
 	rm -rf $(BUILDDIR)
