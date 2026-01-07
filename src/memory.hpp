@@ -9,7 +9,8 @@ public:
   ~Memory();
   void load(long array[], long size);
   void reset();
-  void store(long val);
+  void store(unsigned long address, long val);
+  bool is_valid_address(unsigned long address);
   long get(unsigned long address);
 
 private:
