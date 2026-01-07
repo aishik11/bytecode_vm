@@ -13,7 +13,7 @@ $(BUILDDIR)/$(TARGET): $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hp
 	mkdir -p $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(SRCDIR)/main.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/op_codes.cpp -o $@
 
-test: test_stack test_memory test_opcodes
+test: test_stack test_memory test_opcodes test_vm
 
 test_stack: $(TESTDIR)/test_stack.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp
 	mkdir -p $(BUILDDIR)
@@ -29,6 +29,11 @@ test_opcodes: $(TESTDIR)/test_opcodes.cpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_co
 	mkdir -p $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_opcodes.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_opcodes
 	$(BUILDDIR)/test_opcodes
+
+test_vm: $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/memory.cpp $(SRCDIR)/memory.hpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_codes.hpp
+	mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_vm
+	$(BUILDDIR)/test_vm
 
 clean:
 	rm -rf $(BUILDDIR)
