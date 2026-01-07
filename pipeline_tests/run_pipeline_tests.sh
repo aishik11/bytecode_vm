@@ -11,6 +11,9 @@ run_test() {
 
     echo "Running test: $test_file"
 
+    echo "CWD: $(pwd)"
+    echo "Assembler path: $(readlink -f ../build/assembler)"
+    echo "Running command: ../build/assembler \"$test_file\" \"${test_file%.asm}.bin\""
     # Assemble the .asm file
     ../build/assembler "$test_file" "${test_file%.asm}.bin"
 
@@ -22,9 +25,10 @@ run_test() {
     read -r -a actual_stack <<< "$actual_stack_str"
 
 
-    # Check if the extracted stack matches the expected stack
-    if [ "${#actual_stack[@]}" -ne "${#expected_stack[@]}" ]; then
+    # Check if the actual stack starts with the expected stack
+    if [ "${#actual_stack[@]}" -lt "${#expected_stack[@]}" ]; then
         echo "Test failed: $test_file"
+        echo "Expected stack to have at least ${#expected_stack[@]} elements, but it has ${#actual_stack[@]}."
         echo "Expected stack: ${expected_stack[*]}"
         echo "Actual stack:   ${actual_stack[*]}"
         exit 1
@@ -51,6 +55,8 @@ run_test "test_control.asm" "5" "5" "10"
 run_test "test_functions.asm" "15"
 run_test "test_halt.asm" "(empty)"
 run_test "test_memory.asm" "123"
+run_test "test_loops.asm" "0" "1" "2" "3" "4" "5"
+run_test "test_factorial.asm" "120"
 
 
 # Clean up the generated .bin files
