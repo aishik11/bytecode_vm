@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-ASSEMBLER="$SCRIPT_DIR/../bin/assembler"
+ASSEMBLER="$SCRIPT_DIR/../../build/assembler"
 TEST_DIR="$SCRIPT_DIR"
 
 # Colors for output

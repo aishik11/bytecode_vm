@@ -5,3 +5,5 @@ src/parser.tab.c
 src/parser.tab.h
 src/parser.tab.o
 build
+Assembler/bin
+Assembler/src

@@ -35,7 +35,16 @@ test_vm: $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/memo
 	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_vm.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_vm
 	$(BUILDDIR)/test_vm
 
-clean:
+clean: clean_assembler
 	rm -rf $(BUILDDIR)
 
-.PHONY: all test clean
+clean_assembler:
+	-$(MAKE) -C Assembler clean # Clean the assembler's generated files
+	rm -f $(BUILDDIR)/assembler
+
+assembler:
+	mkdir -p $(BUILDDIR)
+	$(MAKE) -C Assembler
+	cp Assembler/bin/assembler $(BUILDDIR)/assembler
+
+.PHONY: all test clean assembler clean_assembler
