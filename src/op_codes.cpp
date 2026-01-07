@@ -43,9 +43,9 @@ Opcode byteToOpcode(unsigned char byte) {
     return STORE;
   case 0x31:
     return LOAD;
-  case 0x32:
+  case 0x40:
     return CALL;
-  case 0x33:
+  case 0x41:
     return RET;
   case 0xFF:
     return HALT;

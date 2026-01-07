@@ -30,7 +30,8 @@ typedef enum Opcode {
   // Memory
   STORE = 0x30,
   LOAD,
-  CALL,
+  // Control flow - functions
+  CALL = 0x40,
   RET,
   // Halt
   HALT = 0xFF,
