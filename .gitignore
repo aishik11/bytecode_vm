@@ -1,0 +1,6 @@
+bin/assembler
+src/lexer.yy.c
+src/lexer.yy.o
+src/parser.tab.c
+src/parser.tab.h
+src/parser.tab.o

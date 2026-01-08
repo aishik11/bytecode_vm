@@ -1,9 +1,20 @@
 %{
+#include <string.h>
 #include "parser.tab.h"
+
+//- Function to handle labels
+static int handle_label(char* label) {
+    //- Remove the trailing ":"
+    label[strlen(label) - 1] = '\0';
+    yylval.sval = strdup(label);
+    return T_LABEL;
+}
 %}
 
 %option noyywrap
 %option yylineno
+%option noinput
+%option nounput
 
 %%
 
@@ -30,7 +41,13 @@
 "CALL"      { return T_CALL; }
 "RET"       { return T_RET; }
 
-[ \t]+      { /* ignore whitespace */ }
+[a-zA-Z_][a-zA-Z0-9_]*:  { return handle_label(yytext); }
+[a-zA-Z_][a-zA-Z0-9_]*   { yylval.sval = strdup(yytext); return T_ID; }
+
+-?[0-9]+    { yylval.ival = atoi(yytext); return T_INTEGER; }
+0x[0-9a-fA-F]+ { yylval.ival = (int)strtol(yytext, NULL, 0); return T_INTEGER; }
+
+[ 	]+      { /* ignore whitespace */ }
 \n          { return '\n'; }
 ;.*         { /* ignore comments */ }
 
