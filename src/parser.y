@@ -1,31 +1,79 @@
-%{
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-void yyerror(const char *s);
-extern int yylex(void);
+%{ 
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <string.h> 
+
+void yyerror(const char *s); 
+extern int yylex(void); 
 extern int yylineno;
-extern FILE *yyin;
+extern FILE *yyin; 
 
-int pc = 0;
+// Output file 
+FILE *out_file; 
 
-void emit_byte(unsigned char byte) {
-    // In a real assembler, this would write to a file or buffer
-    printf("0x%02x ", byte); // Corrected: escaped the double quote inside printf
+// Bytecode buffer 
+unsigned char bytecode[4096]; 
+int pc = 0; // Program counter 
+
+// Symbol table for labels 
+#define MAX_LABELS 100 
+struct label { 
+    char *name; 
+    int address; 
+};
+struct label symbol_table[MAX_LABELS]; 
+int label_count = 0; 
+
+int pass = 1; // Current pass 
+
+// Function to set the output file 
+void set_output_file(FILE *file) { 
+    out_file = file; 
+}
+
+// Function to add a label to the symbol table 
+void add_label(char *name, int address) { 
+    if (pass == 1) { 
+        if (label_count < MAX_LABELS) { 
+            symbol_table[label_count].name = strdup(name); 
+            symbol_table[label_count].address = address; 
+            label_count++; 
+        } else { 
+            yyerror("Too many labels"); 
+        } 
+    }
+}
+
+// Function to lookup a label 
+int lookup_label(char *name) { 
+    for (int i = 0; i < label_count; i++) { 
+        if (strcmp(symbol_table[i].name, name) == 0) { 
+            return symbol_table[i].address; 
+        }
+    }
+    return -1;
+}
+
+// Function to emit a byte 
+void emit_byte(unsigned char byte) { 
+    if (pass == 2) { 
+        bytecode[pc] = byte; 
+    }
     pc++;
 }
 
-void emit_int(int value) {
-    // In a real assembler, this would write to a file or buffer
-    printf("0x%08x ", value); // Corrected: escaped the double quote inside printf
+// Function to emit a 32-bit integer 
+void emit_int(int value) { 
+    if (pass == 2) { 
+        *(int*)(bytecode + pc) = value; 
+    }
     pc += 4;
 }
+%} 
 
-%}
-
-%union {
-    int ival;
+%union { 
+    int ival; 
     char *sval;
 }
 
@@ -39,7 +87,6 @@ void emit_int(int value) {
 %token T_STORE T_LOAD 
 %token T_CALL T_RET
 %token <sval> T_LABEL
-
 %type <sval> label_def 
 
 %%
@@ -51,7 +98,7 @@ program:
 line:
     '\n' 
     | instruction '\n' 
-    | label_def '\n' 
+    | label_def '\n' { add_label($1, pc); } 
     ;
 
 label_def:
@@ -74,34 +121,127 @@ instruction:
     | T_NOT { emit_byte(0x18); } 
     | T_SHL { emit_byte(0x19); } 
     | T_SHR { emit_byte(0x1A); } 
-    | T_JMP T_ID { emit_byte(0x20); /* handle label later */ pc += 4; } 
-    | T_JZ T_ID { emit_byte(0x21); /* handle label later */ pc += 4; } 
-    | T_JNZ T_ID { emit_byte(0x22); /* handle label later */ pc += 4; } 
+    | T_JMP T_ID { 
+        emit_byte(0x20); 
+        if (pass == 2) { 
+            int addr = lookup_label($2); 
+            if (addr == -1) { 
+                yyerror("Label not found"); 
+            }
+            emit_int(addr); 
+        } else { 
+            pc += 4; 
+        }
+    } 
+    | T_JZ T_ID { 
+        emit_byte(0x21); 
+        if (pass == 2) { 
+            int addr = lookup_label($2); 
+            if (addr == -1) { 
+                yyerror("Label not found"); 
+            }
+            emit_int(addr); 
+        } else { 
+            pc += 4; 
+        }
+    } 
+    | T_JNZ T_ID { 
+        emit_byte(0x22); 
+        if (pass == 2) { 
+            int addr = lookup_label($2); 
+            if (addr == -1) { 
+                yyerror("Label not found"); 
+            }
+            emit_int(addr); 
+        } else { 
+            pc += 4; 
+        }
+    } 
     | T_STORE T_INTEGER { emit_byte(0x30); emit_int($2); } 
     | T_LOAD T_INTEGER { emit_byte(0x31); emit_int($2); } 
-    | T_CALL T_ID { emit_byte(0x40); /* handle label later */ pc += 4; } 
+    | T_CALL T_ID { 
+        emit_byte(0x40); 
+        if (pass == 2) { 
+            int addr = lookup_label($2); 
+            if (addr == -1) { 
+                yyerror("Label not found"); 
+            }
+            emit_int(addr); 
+        } else { 
+            pc += 4; 
+        }
+    } 
     | T_RET { emit_byte(0x41); } 
     ;
 
 %%
 
-void yyerror(const char *s) {
-    fprintf(stderr, "Error at line %d: %s\n", yylineno, s);
+void yyerror(const char *s) { 
+    fprintf(stderr, "Error at line %d: %s\n", yylineno, s); 
 }
 
-int main(int argc, char **argv) {
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
+// Overriding yywrap to link multiple files 
+int yywrap() { 
+    return 1;
+}
+
+// In main.c, we will call this after yyparse 
+void second_pass() { 
+    pc = 0; 
+    pass = 2; 
+    // We need to rewind the input file 
+    rewind(yyin); 
+    // And reset the line number 
+    yylineno = 1; 
+    // And call the parser again 
+    yyparse(); 
+    // Write the bytecode to the file 
+    fwrite(bytecode, 1, pc, out_file); 
+}
+
+// In the original main.c, you should call yyparse() then second_pass() 
+// We will modify main.c to do this. 
+#include <stdio.h> 
+
+// Redefine main to be in the parser file 
+int main(int argc, char **argv) { 
+    if (argc < 3) { 
+        fprintf(stderr, "Usage: %s <input_file> <output_file>\n", argv[0]); 
         return 1;
     }
 
-    yyin = fopen(argv[1], "r");
-    if (!yyin) {
-        perror(argv[1]);
+    yyin = fopen(argv[1], "r"); 
+    if (!yyin) { 
+        perror(argv[1]); 
         return 1;
     }
 
-    yyparse();
-    fclose(yyin);
+    out_file = fopen(argv[2], "wb"); 
+    if (!out_file) { 
+        perror(argv[2]); 
+        fclose(yyin); 
+        return 1;
+    }
+
+    // First pass 
+    pass = 1; 
+    pc = 0; 
+    yyparse(); 
+
+    // Second pass 
+    pass = 2; 
+    pc = 0; 
+    rewind(yyin); 
+    yylineno = 1; 
+    yyparse(); 
+
+    // Write the bytecode 
+    fwrite(bytecode, 1, pc, out_file); 
+
+    fclose(yyin); 
+    fclose(out_file); 
+
+    printf("Assembly successful. Wrote %d bytes.\n", pc); 
+
     return 0;
 }
