@@ -110,3 +110,41 @@ The linear scaling of the recursive factorial is evident, remaining nearly const
 - **Recursion Overhead:** The recursive Fibonacci benchmark highlights the exponential growth in function calls. The jump from `n=20` to `n=25` shows a significant increase in execution time, demonstrating the overhead of `CALL` and `RET` operations at scale.
 - **Factorial:** Recursive factorial, being `O(n)`, remains extremely fast even for `n=25`, as it only involves 25 function calls.
 
+## 7. Garbage Collector Design (Lab 5)
+
+### 7.1. Overview
+A Stop-the-World Mark-Sweep Garbage Collector has been integrated into the VM. It manages dynamically allocated objects (Pairs, Functions, Closures) on a dedicated heap, ensuring memory safety and efficient resource reclamation.
+
+### 7.2. Implementation Details
+
+#### Heap Allocator
+The VM maintains a `heap_head` pointer to a singly linked list of all allocated `Object`s.
+- **Allocation:** `VM::allocate(ObjectType)` uses `malloc` to create objects and prepends them to the list.
+- **Types:** The system supports `OBJ_PAIR`, `OBJ_FUNCTION`, and `OBJ_CLOSURE`.
+
+#### Root Discovery & Stack Refactor
+To safely identify roots, the `Stack` class was refactored.
+- **Previous:** `long mem[]`.
+- **Current:** `StackItem mem[]`, where `struct StackItem { long value; bool is_obj; };`.
+This allows the GC to precisely distinguish between integer data (ignored) and object pointers (roots) on the `register_stack`.
+
+#### Mark Phase
+The `mark(Object* obj)` function performs a recursive traversal (DFS) of the object graph.
+-   It sets the `marked` bit on visited objects.
+-   It recurses into child references (e.g., `pair.head`, `pair.tail`, `closure.env`).
+-   It handles cycles safely by checking the `marked` bit before processing.
+
+#### Sweep Phase
+The `sweep()` function iterates through the global heap list.
+-   **Unmarked:** The object is unreachable. It is unlinked from the list and `free`d.
+-   **Marked:** The object survives. The `marked` bit is reset for the next cycle.
+
+### 7.3. Testing
+A comprehensive test suite (`test/test_gc.cpp`) verifies:
+-   Basic reachability from the stack.
+-   Reclamation of unreachable objects.
+-   Transitive reachability (A -> B).
+-   Cyclic references (A <-> B).
+-   Deep object graphs (10,000+ depth).
+-   Closure environment capture.
+-   Stress allocation.

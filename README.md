@@ -61,6 +61,12 @@ This is a comprehensive test suite that assembles and runs a suite of assembly p
 make pipeline_test
 ```
 
+### 4. Garbage Collector Tests (Lab 5)
+This suite verifies the Mark-Sweep GC implementation, including reachability, cycle handling, and stress testing.
+```bash
+make test_gc
+```
+
 ## Benchmarks
 A set of benchmark programs are included to measure the performance of the VM on different tasks.
 ```bash
@@ -82,3 +88,9 @@ This will run benchmarks for iterative factorial calculation and a simple high-i
 - **Rich Instruction Set**: Includes instructions for data manipulation, arithmetic, bitwise operations, control flow (jumps), memory access, and function calls.
 - **Comprehensive Testing**: Includes unit tests, a dedicated assembler test suite, and end-to-end pipeline tests.
 - **Benchmarking**: Includes scripts to measure VM performance.
+
+## GC Usage
+The GC is integrated into the C++ `VM` class.
+-   **Trigger:** Call `vm.gc()` or the global wrapper `gc(vm)`.
+-   **Allocation:** Use `vm.new_pair()`, `vm.new_closure()`, etc.
+-   **Roots:** Objects pushed to the stack using `vm.register_stack.push((long)obj, true)` are treated as roots.
