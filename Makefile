@@ -40,6 +40,11 @@ test_gc: $(TESTDIR)/test_gc.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/memo
 	$(CXX) $(CXXFLAGS) $(TESTDIR)/test_gc.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/test_gc
 	$(BUILDDIR)/test_gc
 
+gc_benchmark: $(TESTDIR)/gc_benchmark.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/vm.hpp $(SRCDIR)/memory.cpp $(SRCDIR)/memory.hpp $(SRCDIR)/stack.cpp $(SRCDIR)/stack.hpp $(SRCDIR)/op_codes.cpp $(SRCDIR)/op_codes.hpp
+	mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) $(TESTDIR)/gc_benchmark.cpp $(SRCDIR)/vm.cpp $(SRCDIR)/memory.cpp $(SRCDIR)/stack.cpp $(SRCDIR)/op_codes.cpp -o $(BUILDDIR)/gc_benchmark
+	$(BUILDDIR)/gc_benchmark
+
 clean: clean_assembler
 	rm -rf $(BUILDDIR)
 

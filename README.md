@@ -75,6 +75,7 @@ make benchmark
 This will run benchmarks for iterative factorial calculation and a simple high-iteration loop, reporting the execution time.
 
 ## Project Structure
+
 - `src/`: Source code for the VM core (`vm.cpp`, `stack.cpp`, `memory.cpp`, `op_codes.cpp`).
 - `test/`: C++ unit tests for the VM components.
 - `Assembler/`: Source code for the assembler (`lexer.l`, `parser.y`) and its own test suite.
@@ -83,6 +84,7 @@ This will run benchmarks for iterative factorial calculation and a simple high-i
 - `Makefile`: Root makefile for building and running all targets.
 
 ## Features
+
 - **Stack-Based VM**: A virtual machine that uses a stack for all operations.
 - **Two-Pass Assembler**: An assembler built with Flex and Bison that supports labels by performing two passes to resolve addresses.
 - **Rich Instruction Set**: Includes instructions for data manipulation, arithmetic, bitwise operations, control flow (jumps), memory access, and function calls.
@@ -91,6 +93,7 @@ This will run benchmarks for iterative factorial calculation and a simple high-i
 
 ## GC Usage
 The GC is integrated into the C++ `VM` class.
+
 -   **Trigger:** Call `vm.gc()` or the global wrapper `gc(vm)`.
 -   **Allocation:** Use `vm.new_pair()`, `vm.new_closure()`, etc.
 -   **Roots:** Objects pushed to the stack using `vm.register_stack.push((long)obj, true)` are treated as roots.

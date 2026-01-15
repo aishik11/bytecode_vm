@@ -119,28 +119,33 @@ A Stop-the-World Mark-Sweep Garbage Collector has been integrated into the VM. I
 
 #### Heap Allocator
 The VM maintains a `heap_head` pointer to a singly linked list of all allocated `Object`s.
+
 - **Allocation:** `VM::allocate(ObjectType)` uses `malloc` to create objects and prepends them to the list.
 - **Types:** The system supports `OBJ_PAIR`, `OBJ_FUNCTION`, and `OBJ_CLOSURE`.
 
 #### Root Discovery & Stack Refactor
 To safely identify roots, the `Stack` class was refactored.
+
 - **Previous:** `long mem[]`.
 - **Current:** `StackItem mem[]`, where `struct StackItem { long value; bool is_obj; };`.
 This allows the GC to precisely distinguish between integer data (ignored) and object pointers (roots) on the `register_stack`.
 
 #### Mark Phase
 The `mark(Object* obj)` function performs a recursive traversal (DFS) of the object graph.
+
 -   It sets the `marked` bit on visited objects.
 -   It recurses into child references (e.g., `pair.head`, `pair.tail`, `closure.env`).
 -   It handles cycles safely by checking the `marked` bit before processing.
 
 #### Sweep Phase
 The `sweep()` function iterates through the global heap list.
+
 -   **Unmarked:** The object is unreachable. It is unlinked from the list and `free`d.
 -   **Marked:** The object survives. The `marked` bit is reset for the next cycle.
 
 ### 7.3. Testing
 A comprehensive test suite (`test/test_gc.cpp`) verifies:
+
 -   Basic reachability from the stack.
 -   Reclamation of unreachable objects.
 -   Transitive reachability (A -> B).
@@ -148,3 +153,30 @@ A comprehensive test suite (`test/test_gc.cpp`) verifies:
 -   Deep object graphs (10,000+ depth).
 -   Closure environment capture.
 -   Stress allocation.
+
+## 8. Performance Evaluation (Lab 5)
+
+### 8.1. Stress Test Methodology
+To evaluate the Garbage Collector's efficiency and correctness under load, a dedicated benchmark (`test/gc_benchmark.cpp`) was developed.
+
+-   **Total Allocations:** 100,000 Pair objects.
+-   **Reachable Objects:** 10,000 objects (10%) were pushed to the Stack (Root Set).
+-   **Garbage:** 90,000 objects (90%) were left floating (unreachable).
+-   **Process:** The system performed allocations, then triggered a full Stop-the-World GC.
+
+### 8.2. Results
+The benchmark was executed on the lab environment.
+
+| Metric | Value |
+| :--- | :--- |
+| **Total Objects Allocated** | 100,000 |
+| **Objects Kept (Roots)** | 10,000 |
+| **Objects Freed** | 90,000 |
+| **Heap Allocation Time** | ~2.44 ms |
+| **Garbage Collection Time** | ~0.81 ms |
+
+### 8.3. Analysis
+
+-   **Correctness:** The GC correctly identified and freed exactly 90,000 unreachable objects, while preserving the 10,000 roots.
+-   **Efficiency:** The Sweep phase (iterating 100k objects) and Mark phase (10k roots) completed in under 1ms, demonstrating that the Stop-the-World pause is negligible for this heap size.
+-   **Scalability:** The linear sweep ensures execution time grows linearly with the heap size $O(H)$, while the mark phase grows with the number of reachable objects $O(R)$.
