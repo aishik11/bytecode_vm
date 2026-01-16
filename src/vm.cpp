@@ -1,18 +1,23 @@
 #include "vm.hpp"
 #include "op_codes.hpp"
-#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
-VM::VM() : pc(0), verbose(false) {}
+VM::VM() : pc(0), verbose(false), heap_head(nullptr), num_objects(0) {}
 
-VM::~VM() {}
+VM::~VM() {
+  while (heap_head) {
+    Object *next = heap_head->next;
+    free(heap_head);
+    heap_head = next;
+  }
+}
 
 void VM::setVerbose(bool v) { verbose = v; }
 
 void VM::load(const std::string &filename) {
-  FILE* file = fopen(filename.c_str(), "rb");
+  FILE *file = fopen(filename.c_str(), "rb");
   if (!file) {
     throw std::runtime_error("VM Load Error: Could not open file " + filename);
   }
@@ -27,13 +32,15 @@ void VM::load(const std::string &filename) {
   }
   if (file_size % sizeof(long) != 0) {
     fclose(file);
-    throw std::runtime_error("VM Load Error: File size is not a multiple of sizeof(long).");
+    throw std::runtime_error(
+        "VM Load Error: File size is not a multiple of sizeof(long).");
   }
 
   size_t num_longs = file_size / sizeof(long);
   if (num_longs > MEM_SIZE) {
     fclose(file);
-    throw std::runtime_error("VM Load Error: Bytecode size exceeds memory capacity.");
+    throw std::runtime_error(
+        "VM Load Error: Bytecode size exceeds memory capacity.");
   }
 
   long buffer[num_longs];
@@ -42,8 +49,99 @@ void VM::load(const std::string &filename) {
 
   program_memory.load(buffer, num_longs);
   pc = 0;
-  std::cout << "Loaded " << file_size << " bytes from " << filename << std::endl;
+  std::cout << "Loaded " << file_size << " bytes from " << filename
+            << std::endl;
 }
+
+// --- GC Implementation ---
+
+Object *VM::allocate(ObjectType type) {
+  Object *obj = (Object *)malloc(sizeof(Object));
+  if (!obj)
+    throw std::runtime_error("Heap Allocation Failed");
+
+  obj->marked = false;
+  obj->type = type;
+  obj->next = heap_head;
+  heap_head = obj;
+  num_objects++;
+
+  return obj;
+}
+
+Object *VM::new_pair(Object *head, Object *tail) {
+  Object *obj = allocate(OBJ_PAIR);
+  obj->pair.head = head;
+  obj->pair.tail = tail;
+  return obj;
+}
+
+Object *VM::new_function() {
+  Object *obj = allocate(OBJ_FUNCTION);
+  obj->func.address = 0; // Placeholder
+  return obj;
+}
+
+Object *VM::new_closure(Object *fn, Object *env) {
+  Object *obj = allocate(OBJ_CLOSURE);
+  obj->closure.fn = fn;
+  obj->closure.env = env;
+  return obj;
+}
+
+void VM::mark(Object *obj) {
+  if (!obj || obj->marked)
+    return;
+
+  obj->marked = true;
+
+  switch (obj->type) {
+  case OBJ_PAIR:
+    mark(obj->pair.head);
+    mark(obj->pair.tail);
+    break;
+  case OBJ_CLOSURE:
+    mark(obj->closure.fn);
+    mark(obj->closure.env);
+    break;
+  case OBJ_FUNCTION:
+    break;
+  }
+}
+
+void VM::sweep() {
+  Object **curr = &heap_head;
+  while (*curr) {
+    Object *obj = *curr;
+    if (!obj->marked) {
+      *curr = obj->next;
+      free(obj);
+      num_objects--;
+    } else {
+      obj->marked = false;
+      curr = &obj->next;
+    }
+  }
+}
+
+void VM::gc() {
+  if (verbose)
+    std::cout << "GC Triggered. Objects before: " << num_objects << std::endl;
+
+  for (unsigned long i = 0; i < register_stack.get_size(); ++i) {
+    const StackItem &item = register_stack.get_item(i);
+    if (item.is_obj) {
+      mark((Object *)item.value);
+    }
+  }
+
+  sweep();
+
+  if (verbose)
+    std::cout << "GC Complete. Objects after: " << num_objects << std::endl;
+}
+
+void gc(VM &vm) { vm.gc(); }
 
 void VM::run() {
   if (verbose) {
@@ -76,7 +174,7 @@ void VM::run() {
         throw std::runtime_error(
             "VM Runtime Error: PUSH operand out of bounds.");
       val1 = program_memory.get(pc++);
-      register_stack.push(val1);
+      register_stack.push(val1); // Default is_obj=false
       if (verbose)
         std::cout << " " << val1 << " (PUSH " << val1 << ")" << std::endl;
       break;
